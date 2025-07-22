@@ -1,8 +1,8 @@
 # === File: telegram_bot.py ===
 import pandas as pd
+import openai
 from telegram import Update
 from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes, filters
-from openai import OpenAI
 
 # === Hardcoded API keys for Render deployment ===
 BOT_TOKEN = "7690348753:AAGmEIzr0vMjlv1NybXK3kbu-XMm3SXDGx0"
@@ -19,11 +19,9 @@ def build_context(df):
 
 crm_context = build_context(df)
 
-# === Initialize OpenRouter AI Client ===
-client = OpenAI(
-    base_url="https://openrouter.ai/api/v1",
-    api_key=OPENROUTER_API_KEY,
-)
+# === Initialize OpenAI client for OpenRouter ===
+openai.api_key = OPENROUTER_API_KEY
+openai.base_url = "https://openrouter.ai/api/v1"
 
 def ask_kimi_k2(question: str) -> str:
     prompt = f"""You are a helpful assistant. Based on this CRM data:
@@ -31,16 +29,15 @@ def ask_kimi_k2(question: str) -> str:
 
 Answer the question: {question}
 """
-    response = client.chat.completions.create(
+    response = openai.chat.completions.create(
         model="moonshotai/kimi-k2",
         messages=[
             {"role": "user", "content": prompt}
         ],
         extra_headers={
-            "HTTP-Referer": "https://yourdomain.com",  # Optional for OpenRouter leaderboard
-            "X-Title": "telegram-kimi-bot"              # Optional title for your app
-        },
-        extra_body={}
+            "HTTP-Referer": "https://yourdomain.com",
+            "X-Title": "telegram-kimi-bot"
+        }
     )
     return response.choices[0].message.content
 
