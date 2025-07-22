@@ -1,4 +1,3 @@
-# === File: telegram_bot.py ===
 import pandas as pd
 import openai
 from telegram import Update
@@ -19,27 +18,31 @@ def build_context(df):
 
 crm_context = build_context(df)
 
-# === Initialize OpenAI client for OpenRouter ===
+# === Configure OpenRouter (OpenAI-compatible SDK) ===
 openai.api_key = OPENROUTER_API_KEY
 openai.base_url = "https://openrouter.ai/api/v1"
 
+# === Ask Kimi K2 model via OpenRouter ===
 def ask_kimi_k2(question: str) -> str:
     prompt = f"""You are a helpful assistant. Based on this CRM data:
 {crm_context}
 
 Answer the question: {question}
 """
-    response = openai.chat.completions.create(
-        model="moonshotai/kimi-k2",
-        messages=[
-            {"role": "user", "content": prompt}
-        ],
-        extra_headers={
-            "HTTP-Referer": "https://yourdomain.com",
-            "X-Title": "telegram-kimi-bot"
-        }
-    )
-    return response.choices[0].message.content
+    try:
+        response = openai.chat.completions.create(
+            model="moonshotai/kimi-k2",
+            messages=[
+                {"role": "user", "content": prompt}
+            ],
+            extra_headers={
+                "HTTP-Referer": "https://yourdomain.com",  # optional
+                "X-Title": "telegram-kimi-bot"
+            }
+        )
+        return response.choices[0].message.content
+    except Exception as e:
+        return f"❌ AI API error: {str(e)}"
 
 # === Telegram Bot Logic ===
 async def reply(update: Update, context: ContextTypes.DEFAULT_TYPE):
